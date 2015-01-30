@@ -1,0 +1,8 @@
+*~
+\#*\#
+bitAger/bin/Debug
+bitAger/bin/Release/*.config
+bitAger/bin/Release/*.pdb
+bitAger/bin/Release/*.vshost.exe
+bitAger/bin/Release/*.manifest
+bitAger/obj

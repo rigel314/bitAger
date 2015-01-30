@@ -32,23 +32,102 @@ namespace bitAger
 			if (nBits % 8 != 0)
 				extra = 1;
 
-			bytes = new byte[nbits/8 + extra];
+			this.bytes = new byte[nbits/8 + extra];
+			Bytes.CopyTo(this.bytes, 0);
 		}
 
 		public static bitField operator <<(bitField a, int n)
 		{
 			byte[] bs = new byte[a.bytes.Length];
 
-			for (int i = 0; i<bs.Length; i++)
-			{
-				bs[i] = (byte) ((a.bytes[i] << 1) | (a.bytes[i+1] & 0x01));
-			}
-			return new bitField(n, bs);
+			a.bytes.CopyTo(bs, 0);
+
+			while (n-- > 0)
+				for (int i = 0; i<bs.Length; i++)
+				{
+					bs[i] = (byte) (bs[i] << 1);
+
+					if(i<bs.Length-1)
+						 bs[i] |= (byte) ((bs[i+1] & 0x80) >> 7);
+				}
+
+			return new bitField(a.nbits, bs);
 		}
 
-		public byte[] littleEndianValue()
+		public static bitField operator |(bitField a, uint orMask)
 		{
-			return null;
+			byte[] bs = new byte[a.bytes.Length];
+			int maxLen = 4;
+
+			a.bytes.CopyTo(bs, 0);
+
+			if (a.bytes.Length < 4)
+				maxLen = a.bytes.Length;
+
+			for (int i = 0; i < maxLen; i++)
+			{
+				bs[a.bytes.Length-i-1] |= (byte) ((orMask & (0xFFu<<i*8)) >> i*8);
+			}
+
+			return new bitField(a.nbits, bs);
+		}
+
+		public static explicit operator System.UInt64(bitField a)
+		{
+			ulong retVal = 0;
+			int maxLen = 8;
+			byte highMask = 0xFF;
+			byte[] bs = new byte[a.bytes.Length];
+
+			a.bytes.CopyTo(bs, 0);
+
+			if (a.nbits % 8 != 0)
+				highMask >>= (8 - (a.nbits % 8));
+			bs[0] &= highMask;
+
+			if (bs.Length < 8)
+				maxLen = bs.Length;
+
+			for (int i = 0; i < maxLen; i++)
+			{
+				retVal |= ((ulong)bs[maxLen - i - 1]) << i * 8;
+			}
+
+			return retVal;
+		}
+
+		public override string ToString()
+		{
+			if (nbits <= 64)
+				return ((ulong)this).ToString("X");
+			else
+				return base.ToString();
+		}
+
+		public bitField littleEndianValue()
+		{
+			int shift = 0;
+			byte[] bs = new byte[bytes.Length];
+			bitField retVal;
+
+			bytes.CopyTo(bs, 0);
+			retVal = new bitField(nbits, bs);
+
+			if (nbits <= 8)
+				return retVal;
+
+			if (nbits % 8 != 0)
+				shift = (8 - nbits % 8);
+			retVal <<= shift;
+			for (int i = 0; i < bs.Length / 2; i++)
+			{
+				byte tmp = bs[i];
+				bs[i] = bs[bs.Length - i - 1];
+				bs[bs.Length - i - 1] = tmp;
+			}
+			retVal.bytes[0] >>= shift;
+	
+			return retVal;
 		}
 	}
 }

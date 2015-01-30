@@ -1,5 +1,5 @@
 uint ver1 8 B
 uint ver1 8 B
-uint width 16 B
+uint width 16 L
 spare aoeu 7 B
-uint height 9 B
+uint height 9 L

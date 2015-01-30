@@ -59,40 +59,42 @@ namespace bitAger
 
 			lastBits = (uint)f.bitwidth + lastBits - 8 * (uint)bytesToRead;
 
+			if (f.bitwidth <= 64)
+			{
+				bitField retVal = new bitField(f.bitwidth);
+				int bitsUsed = 0;
+				int bitCounter = 0;
+
+				while (bitsUsed < f.bitwidth)
+				{
+					byte curByte = newBytes[bitCounter / 8];
+					uint curBit;
+
+					if (bitCounter < locLastBits)
+					{
+						bitCounter++;
+						continue;
+					}
+
+					curByte <<= (bitCounter % 8);
+					curBit = (curByte & (0x80u)) >> 7;
+
+					retVal <<= 1;
+					retVal |= curBit;
+					bitsUsed++;
+					bitCounter++;
+				}
+				if (!f.endianness)
+				{
+					retVal = retVal.littleEndianValue();
+				}
+				return retVal;
+			}
+
 			switch (f.type)
 			{
 				case "uint":
-					if (f.bitwidth <= 64)
-					{
-						ulong retVal = 0;
-						int bitsUsed = 0;
-						int bitCounter = 0;
-
-						while (bitsUsed < f.bitwidth)
-						{
-							byte curByte = newBytes[bitCounter / 8];
-							uint curBit;
-
-							if (bitCounter < locLastBits)
-							{
-								bitCounter++;
-								continue;
-							}
-
-							curByte <<= (bitCounter % 8);
-							curBit = (curByte & (0x80u)) >> 7;
-
-							retVal <<= 1;
-							retVal |= curBit;
-							bitsUsed++;
-							bitCounter++;
-						}
-						if (!f.endianness)
-						{
-							;
-						}
-						return retVal;
-					}
+					
 					break;
 				case "sint":
 

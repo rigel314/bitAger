@@ -8,6 +8,8 @@ namespace bitAger
 {
 	class bitField
 	{
+		enum bitFieldArg { CopyBytesAsRef };
+
 		byte[] bytes;
 		int nbits;
 
@@ -34,6 +36,12 @@ namespace bitAger
 
 			this.bytes = new byte[nbits/8 + extra];
 			Bytes.CopyTo(this.bytes, 0);
+		}
+
+		private bitField(int nBits, byte[] Bytes, bitFieldArg aoeu)
+		{
+			this.nbits = nBits;
+			this.bytes = Bytes;
 		}
 
 		public static bitField operator <<(bitField a, int n)
@@ -107,11 +115,8 @@ namespace bitAger
 		public bitField littleEndianValue()
 		{
 			int shift = 0;
-			byte[] bs = new byte[bytes.Length];
-			bitField retVal;
-
-			bytes.CopyTo(bs, 0);
-			retVal = new bitField(nbits, bs);
+			int len = bytes.Length;
+			bitField retVal = new bitField(nbits, bytes);
 
 			if (nbits <= 8)
 				return retVal;
@@ -119,11 +124,12 @@ namespace bitAger
 			if (nbits % 8 != 0)
 				shift = (8 - nbits % 8);
 			retVal <<= shift;
-			for (int i = 0; i < bs.Length / 2; i++)
+			for (int i = 0; i < len / 2; i++)
 			{
-				byte tmp = bs[i];
-				bs[i] = bs[bs.Length - i - 1];
-				bs[bs.Length - i - 1] = tmp;
+				byte tmp = retVal.bytes[i];
+
+				retVal.bytes[i] = retVal.bytes[len - i - 1];
+				retVal.bytes[len - i - 1] = tmp;
 			}
 			retVal.bytes[0] >>= shift;
 	

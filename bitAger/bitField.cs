@@ -90,7 +90,7 @@ namespace bitAger
 			a.bytes.CopyTo(bs, 0);
 
 			if (a.nbits % 8 != 0)
-				highMask >>= (8 - (a.nbits % 8));
+				highMask >>= (a.nbits % 8);
 			bs[0] &= highMask;
 
 			if (bs.Length < 8)
@@ -104,8 +104,49 @@ namespace bitAger
 			return retVal;
 		}
 
+		public static explicit operator System.Int64(bitField a)
+		{
+			long retVal = -1;
+			int maxLen = 8;
+			byte highMask = 0xFF;
+			byte[] bs = new byte[a.bytes.Length];
+			int highBit;
+
+			if (a.nbits % 8 == 0)
+				highBit = a.bytes[0] >> 7;
+			else
+				highBit = a.bytes[0] >> ((a.nbits % 8)-1);
+
+			if (highBit == 0)
+				return (long)(ulong)a;
+
+			a.bytes.CopyTo(bs, 0);
+
+			if (a.nbits % 8 != 0)
+				highMask <<= a.nbits%8;
+			bs[0] |= highMask;
+
+			if (bs.Length < 8)
+				maxLen = bs.Length;
+
+			for (int i = 0; i < maxLen; i++)
+			{
+				retVal ^= ((long)(byte)~bs[maxLen - i - 1]) << i * 8;
+			}
+
+			return retVal;
+		}
+
 		public override string ToString()
 		{
+			StringBuilder sb = new StringBuilder();
+
+			for (int i = 0; i < bytes.Length; i++ )
+			{
+				sb.AppendFormat("{0:X2} ", bytes[i]);
+			}
+			return sb.ToString();
+
 			if (nbits <= 64)
 				return ((ulong)this).ToString("X");
 			else

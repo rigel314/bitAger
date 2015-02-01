@@ -9,6 +9,7 @@ namespace bitAger
 	public class FieldInterpreter
 	{
 		private static string[] types = { "sint", "uint", "float", "fixed", "spare" };
+		private enum fieldTypes { SINT, UINT, FLOAT, FIXED, SPARE };
 		struct Field
 		{
 			public string type;
@@ -30,7 +31,10 @@ namespace bitAger
 			foreach (string line in desc)
 			{
 				Field f = new Field();
+				if (line == "")
+					continue;
 				string[] tokens = line.Split(new string[] { " ", "\t" }, 4, StringSplitOptions.RemoveEmptyEntries); // TODO: Catch exception?
+
 				if (tokens.Length != 4)
 					return;
 				f.type = tokens[0];
@@ -53,52 +57,53 @@ namespace bitAger
 			newBytes = new byte[bytesToRead+1];
 			newBytes[0] = lastByte;
 
-			fStream.Read(newBytes, 1, bytesToRead);
+			fStream.Read(newBytes, 1, bytesToRead); // TODO: do something if bytes_read < bytesToRead
 			if (bytesToRead > 0)
 				lastByte = newBytes[newBytes.Length-1];
 
 			lastBits = (uint)f.bitwidth + lastBits - 8 * (uint)bytesToRead;
 
-			if (f.bitwidth <= 64)
+			bitField retVal = new bitField(f.bitwidth);
+			int bitsUsed = 0;
+			int bitCounter = 0;
+
+			while (bitsUsed < f.bitwidth)
 			{
-				bitField retVal = new bitField(f.bitwidth);
-				int bitsUsed = 0;
-				int bitCounter = 0;
+				byte curByte = newBytes[bitCounter / 8];
+				uint curBit;
 
-				while (bitsUsed < f.bitwidth)
+				if (bitCounter < locLastBits)
 				{
-					byte curByte = newBytes[bitCounter / 8];
-					uint curBit;
-
-					if (bitCounter < locLastBits)
-					{
-						bitCounter++;
-						continue;
-					}
-
-					curByte <<= (bitCounter % 8);
-					curBit = (curByte & (0x80u)) >> 7;
-
-					retVal <<= 1;
-					retVal |= curBit;
-					bitsUsed++;
 					bitCounter++;
+					continue;
 				}
-				if (!f.endianness)
-				{
-					retVal = retVal.littleEndianValue();
-				}
-				return retVal;
+
+				curByte <<= (bitCounter % 8);
+				curBit = (curByte & (0x80u)) >> 7;
+
+				retVal <<= 1;
+				retVal |= curBit;
+				bitsUsed++;
+				bitCounter++;
+			}
+			if (!f.endianness)
+			{
+				retVal = retVal.littleEndianValue();
 			}
 
 			switch (f.type)
 			{
 				case "uint":
-					
-					break;
-				case "sint":
+					if (f.bitwidth <= 64)
+						return (ulong)retVal;
+					else
+						return retVal;
 
-					break;
+				case "sint":
+					if (f.bitwidth <= 64)
+						return (long)retVal;
+					else
+						return retVal;
 			}
 			return 0;
 		}
@@ -107,6 +112,11 @@ namespace bitAger
 		{
 			foreach (Field f in field)
 			{
+				if (f.type == types[(int)fieldTypes.SPARE])
+				{
+					getNext(f);
+					continue;
+				}
 				Console.WriteLine("{0}: {1}", f.name, getNext(f));
 			}
 		}

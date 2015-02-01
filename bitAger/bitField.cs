@@ -90,7 +90,7 @@ namespace bitAger
 			a.bytes.CopyTo(bs, 0);
 
 			if (a.nbits % 8 != 0)
-				highMask >>= (a.nbits % 8);
+				highMask >>= (8 - a.nbits % 8);
 			bs[0] &= highMask;
 
 			if (bs.Length < 8)

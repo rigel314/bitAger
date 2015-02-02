@@ -6,3 +6,4 @@ bitAger/bin/Release/*.pdb
 bitAger/bin/Release/*.vshost.exe
 bitAger/bin/Release/*.manifest
 bitAger/obj
+bitAger/bin/*.bak

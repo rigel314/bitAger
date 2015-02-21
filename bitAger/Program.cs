@@ -8,9 +8,9 @@ namespace bitAger
 {
 	static class Program
 	{
-		public static bool windowed = true;
-		public static List<string> inputFiles = new List<string>();
-		public static List<string> descriptorFiles = new List<string>();
+		static bool windowed;
+		static List<string> inputFiles;
+		static List<string> descriptorFiles;
 
 		private static List<FieldInterpreter> interpreters = new List<FieldInterpreter>();
 
@@ -23,6 +23,9 @@ namespace bitAger
 			var parser = new ArgParser(args);
 			
 			parser.Parse();
+			windowed = parser.windowed;
+			inputFiles = parser.inputFiles;
+			descriptorFiles = parser.descriptorFiles;
 
 			if(inputFiles.Count() != descriptorFiles.Count() && descriptorFiles.Count > 1)
 			{
@@ -70,6 +73,9 @@ namespace bitAger
 	class ArgParser
 	{
 		private string[] args;
+		public bool windowed = true;
+		public List<string> inputFiles = new List<string>();
+		public List<string> descriptorFiles = new List<string>();
 
 		public ArgParser(string[] argsIn)
 		{
@@ -88,14 +94,14 @@ namespace bitAger
 				}
 				if (args[i] == "-d" && i < args.Length - 1 && !doubleDashFlag)
 				{
-					Program.descriptorFiles.Add(args[i + 1]);
+					descriptorFiles.Add(args[i + 1]);
 					i++;
 					continue;
 				}
 				if (args[i] == "-n" && !doubleDashFlag)
-					Program.windowed = false;
+					windowed = false;
 				else
-					Program.inputFiles.Add(args[i]);
+					inputFiles.Add(args[i]);
 			}
 		}
 	}

@@ -146,11 +146,6 @@ namespace bitAger
 				sb.AppendFormat("{0:X2} ", bytes[i]);
 			}
 			return sb.ToString();
-
-			if (nbits <= 64)
-				return ((ulong)this).ToString("X");
-			else
-				return base.ToString();
 		}
 
 		public bitField littleEndianValue()
